@@ -97,7 +97,7 @@ app.get('/e', function(req, res) {
 	res.send(req.query.e);
 });
 
-app.listen(8888, () => {
+app.listen(process.env.PORT, () => {
 	console.info('Server started');
 });
 
