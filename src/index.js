@@ -1,6 +1,5 @@
 import express from 'express';
 import fetch from 'node-fetch';
-import { stringify } from 'querystring';
 import { config } from 'dotenv';
 import { initDb } from './db/init.js';
 import './bot/main.js';
