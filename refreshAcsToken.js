@@ -1,6 +1,12 @@
 import { reauth } from './src/index.js';
 
-console.log('Refresh access token timer set');
-setTimeout(async () => {
-	await reauth();
-}, 1800000);
+export async function refreshAccessTokenLoop(uuid) {
+	console.log('Refreshing access token');
+	await reauth(uuid);
+	console.log('Refreshed access token');
+	setTimeout(async () => {
+		await refreshAccessTokenLoop(uuid);
+	}, 1800000);
+}
+
+export { refreshAccessTokenLoop }
