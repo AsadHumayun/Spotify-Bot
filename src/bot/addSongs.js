@@ -5,9 +5,10 @@ import { reauth, Users, Channels } from '../index.js';
  * Adds songs to the Spotify playlist in question, while checking for duplicates.
  * @param {import('discord.js').Message} message {@link https://discord.js.org/#/docs/main/stable/class/Message')}
  * @param {string[]} songLinks song links to add to the playlist
+ * @param {string} correlationId correlation ID associated with the request (for logging purposes)
  * @returns {Promise<Array<number, string, string>>} number: status code, string: status message
  */
-export async function addSongs(message, songLinks) {
+export async function addSongs(message, songLinks, correlationId) {
 	/**
 	 * [0]
 	 * 1 = ERROR
@@ -33,17 +34,23 @@ export async function addSongs(message, songLinks) {
 	let playlist = await pRes.json();
 
 	if (playlist.error?.status === 401) {
-		/** Refresh user's access token */
-		reauth(user.dataValues.id)
-			.then(async () => {
-				const _ = await fetch('https://api.spotify.com/v1/playlists/' + message.client.config.PLAYLIST_ID, {
-					headers: {
-						'Authorization': 'Bearer ' + user.dataValues.spotifyAccessToken,
-					},
-					method: 'GET',
-				});
-				playlist = await _.json();
+		// Refresh user's access token and wait for it to complete.
+		try {
+			await reauth(user.dataValues.id);
+			message.client.channels.cache.get(message.client.config.CHANNELS.LOGS).send(`${Math.trunc(Date.now() / 60000)} > **$ Prc!** (addSongs > reauth) ${correlationId} U:${message.author.id}`);
+			// Now that the access token is refreshed, fetch the playlist.
+			const response = await fetch('https://api.spotify.com/v1/playlists/' + message.client.config.PLAYLIST_ID, {
+				headers: {
+					'Authorization': 'Bearer ' + user.dataValues.spotifyAccessToken,
+				},
+				method: 'GET',
 			});
+
+			playlist = await response.json();
+		}
+		catch (error) {
+			message.client.channels.cache.get(message.client.config.CHANNELS.LOGS).send(`${Math.trunc(Date.now() / 60000)} > **$ ERR!!** ${correlationId} U:${message.author.id}\nE: \`${error}\``);
+		}
 	}
 
 	const toAdd = [];
@@ -52,7 +59,6 @@ export async function addSongs(message, songLinks) {
 	songLinks.forEach((song) => {
 		if (songs.includes(song)) {
 			__return.push([1, song, 'Song was not added to playlist because of config behavior `_global.config.BOT.__BEHAVIORS.ALLOW_DUPLICATES` has been set to false.']);
-			return;
 		}
 		else {
 			toAdd.push('spotify:track:' + song.split('/').pop().split('?')[0]);

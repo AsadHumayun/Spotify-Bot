@@ -1,9 +1,13 @@
 const _ = {
 	BOT: {
 		PREFIX: '~',
-		PLAYLIST_ID: '3rXTNbtADRyvUOamM3gBUM',
+		/** ID of the playlist to add songs to. */
+		PLAYLIST_ID: '2nz1A6WBiUHtiPFEHwDWfn',
+		MAIN_USER: '504619833007013899',
 		CHANNELS: {
-			MUSIC: '1099052249319227443',
+			LOGS: '1170873130768670761',
+			/** Snowflake ID of the channel to read messages from */
+			MUSIC: '622908506256703519',
 		},
 	},
 };
