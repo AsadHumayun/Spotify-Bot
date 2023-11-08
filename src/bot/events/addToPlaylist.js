@@ -6,7 +6,7 @@ export default {
 	once: false,
 	async execute(client, message) {
 		if (message.channel.id !== client.config.CHANNELS.MUSIC || message.author.bot || message.webhookId) return;
-
+		if (message.content.toLowerCase().startsWith('@bot-ignore'.toLowerCase())) return;
 		const words = message.content.split('\n').join(' ').split(/ +/g);
 		const songLinks = [];
 		const correlationId = `${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}`;
@@ -15,7 +15,6 @@ export default {
 			if (!word.startsWith('https://open.spotify.com/track/')) return;
 			songLinks.push(word);
 		});
-
 		if (songLinks.length === 0) return;
 		let returned;
 
@@ -23,8 +22,8 @@ export default {
 			returned = await addSongs(message, songLinks, correlationId);
 		}
 		catch (e) {
-			message.channel.send(`Sorry, an exception occurred :c\ncorrelation id: **$ ERR!!** ${correlationId} U:${message.author.id}`);
-			client.channels.cache.get(client.config.CHANNELS.LOGS).send(`${Math.trunc(Date.now() / 60000)} > **$ ERR!!** ${correlationId}:\n\n\`${e}\`\n\nsongLinks\n${songLinks.join('\n')}`);
+			message.channel.send(`Sorry, an exception occurred :c\nexcpt: \`${e}\`\ncorrelation id: **$ ERR!!** ${correlationId} U:${message.author.id}`);
+			client.channels.cache.get(client.config.CHANNELS.LOGS).send(`${Math.trunc(Date.now() / 60000)} > **$ ERR!!** ${correlationId}:\n\n\`${e.stack}\`\n\nsongLinks\n${songLinks.join('\n')}`);
 		}
 
 		if (message.SendResponses == false) return;

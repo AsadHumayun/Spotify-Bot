@@ -24,13 +24,14 @@ export async function addSongs(message, songLinks, correlationId) {
 	if (!channel) throw new Error('Channel not found in database; please use ~register to create the resource.');
 	const user = await Users.findByPk(channel.dataValues.postAccount);
 	// First check for duplicates
+	console.log('user#dataValues', user.dataValues)
 	const pRes = await fetch('https://api.spotify.com/v1/playlists/' + message.client.config.PLAYLIST_ID, {
 		headers: {
 			'Authorization': 'Bearer ' + user.dataValues.spotifyAccessToken,
 		},
 		method: 'GET',
 	});
-
+	console.log('pRes', pRes);
 	let playlist = await pRes.json();
 
 	if (playlist.error?.status === 401) {
