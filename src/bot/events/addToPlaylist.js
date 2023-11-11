@@ -29,7 +29,7 @@ export default {
 		if (message.SendResponses == false) return;
 
 		let embed = new EmbedBuilder()
-			.setColor('#5edaa8')
+			.setColor(message.author.id == '504619833007013899' ? '#5edaa8' : message.member.displayHexColor)
 			.setTimestamp()
 			.setAuthor({ name: message.author.username, iconURL: message.author.avatarURL() })
 			.setFooter({ text: 'This message will be removed in 20 seconds' })
@@ -54,7 +54,15 @@ correlation id: $Cs-${correlationId}
 		message.react('<:GigaChode:905554899733975090>');
 
 		setTimeout(() => {
-			msg.delete();
+			msg.edit({
+				embeds: [
+					embed.setColor('#e87c09').setFooter({ text: 'This message will be removed in 10 seconds' }),
+				],
+			});
 		}, 10_000);
+
+		setTimeout(() => {
+			msg.delete();
+		}, 20_000);
 	},
 };

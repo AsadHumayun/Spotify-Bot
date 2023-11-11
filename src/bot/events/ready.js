@@ -17,6 +17,7 @@ export default {
 		catch (e) {
 			client.channels.cache.get(client.config.CHANNELS.LOGS).send(`${Math.trunc(Date.now() / 60000)} > ready > **$ ERR!!** \`${e}\``);
 		}
+
 		setTimeout(async () => {
 			await reauth(client.config.MAIN_USER);
 		}, 1800000);

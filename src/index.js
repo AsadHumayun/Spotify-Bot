@@ -109,31 +109,48 @@ createClient();
  * @returns {Promise<boolean>}
  */
 async function reauth(userId) {
-	const user = await Users.findByPk(userId);
-	if (!user || !user.spotifyRefreshToken) {
-		throw new Error('User not found or no refresh token found');
+	try {
+		console.log('Refreshing access token (reauth)...');
+		const user = await Users.findByPk(userId);
+
+		if (!user || !user.spotifyRefreshToken) {
+			throw new Error('User not found or no refresh token found');
+		}
+
+		let result = await fetch('https://accounts.spotify.com/api/token', {
+			method: 'POST',
+			body: `grant_type=refresh_token&refresh_token=${user.spotifyRefreshToken}&redirect_uri=${redirect_uri}`,
+			headers: {
+				'Authorization': 'Basic ' + (Buffer.from(`${client_id}:${process.env.CLIENT_SECRET}`).toString('base64')),
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+		});
+
+		if (!result.ok) {
+			throw new Error(`Failed to refresh token. Status: ${result.status}, StatusText: ${result.statusText}`);
+		}
+
+		result = await result.json();
+
+		const updateResult = await Users.update({
+			spotifyAccessToken: result.access_token,
+		}, {
+			where: {
+				id: userId,
+			},
+		});
+
+		if (updateResult[0] === 1) {
+			console.log('Refreshed access token for ' + userId);
+			return true;
+		}
+		else {
+			throw new Error('Failed to update database with refreshed access token');
+		}
 	}
-
-	let result = await fetch('https://accounts.spotify.com/api/token', {
-		method: 'POST',
-		body: `grant_type=refresh_token&refresh_token=${user.spotifyRefreshToken}&redirect_uri=${redirect_uri}`,
-		headers: {
-			'Authorization': 'Basic ' + (new Buffer.from(client_id + ':' + process.env.CLIENT_SECRET).toString('base64')),
-			'Content-Type': 'application/x-www-form-urlencoded',
-		},
-	});
-
-	result = await result.json();
-
-	Users.update({
-		spotifyAccessToken: result.access_token,
-	}, {
-		where: {
-			id: userId,
-		},
-	});
-
-	return true;
+	catch (error) {
+		console.error('Error during token refresh:', error);
+		return false;
+	}
 }
-
 export { reauth, sequelize, Users, Channels };

@@ -24,35 +24,41 @@ export async function addSongs(message, songLinks, correlationId) {
 	if (!channel) throw new Error('Channel not found in database; please use ~register to create the resource.');
 	const user = await Users.findByPk(channel.dataValues.postAccount);
 	// First check for duplicates
-	console.log('user#dataValues', user.dataValues)
-	const pRes = await fetch('https://api.spotify.com/v1/playlists/' + message.client.config.PLAYLIST_ID, {
-		headers: {
-			'Authorization': 'Bearer ' + user.dataValues.spotifyAccessToken,
-		},
-		method: 'GET',
-	});
-	console.log('pRes', pRes);
-	let playlist = await pRes.json();
+	let response;
+	try {
+		response = await fetch('https://api.spotify.com/v1/playlists/' + message.client.config.PLAYLIST_ID, {
+			headers: {
+				'Authorization': 'Bearer ' + user.dataValues.spotifyAccessToken,
+			},
+			method: 'GET',
+		});
 
-	if (playlist.error?.status === 401) {
-		// Refresh user's access token and wait for it to complete.
+		response = await response.json();
+
+		if (response.error) {
+			throw new Error(response.error.message);
+		}
+
+	}
+	catch (e) {
 		try {
 			await reauth(user.dataValues.id);
+			await user.reload();
 			message.client.channels.cache.get(message.client.config.CHANNELS.LOGS).send(`${Math.trunc(Date.now() / 60000)} > **$ Prc!** (addSongs > reauth) ${correlationId} U:${message.author.id}`);
-			// Now that the access token is refreshed, fetch the playlist.
-			const response = await fetch('https://api.spotify.com/v1/playlists/' + message.client.config.PLAYLIST_ID, {
+			response = await fetch('https://api.spotify.com/v1/playlists/' + message.client.config.PLAYLIST_ID, {
 				headers: {
 					'Authorization': 'Bearer ' + user.dataValues.spotifyAccessToken,
 				},
 				method: 'GET',
 			});
 
-			playlist = await response.json();
+			response = await response.json();
 		}
 		catch (error) {
-			message.client.channels.cache.get(message.client.config.CHANNELS.LOGS).send(`${Math.trunc(Date.now() / 60000)} > **$ ERR!!** ${correlationId} U:${message.author.id}\nE: \`${error}\``);
+			message.client.channels.cache.get(message.client.config.CHANNELS.LOGS).send(`${Math.trunc(Date.now() / 60000)} > **$ ERR!!** ${correlationId} U:${message.author.id}\nE: \`${error}\`.\nThis error occurred while refreshing an access token.`);
 		}
 	}
+	const playlist = response;
 
 	const toAdd = [];
 	const songs = playlist.tracks.items.map((i) => i.track.external_urls.spotify);
