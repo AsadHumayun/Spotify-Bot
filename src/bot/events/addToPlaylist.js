@@ -38,7 +38,8 @@ export default {
 successfully recorded **${returned.filter((r) => r[0] === 0).length}** entries.
 [view playlist](https://open.spotify.com/playlist/${client.config.PLAYLIST_ID})
 
-correlation id: $Cs-${correlationId}
+ActivityId: \`1(${message.id})\`
+CorrelationId: \`${correlationId}\`
 				`,
 			);
 

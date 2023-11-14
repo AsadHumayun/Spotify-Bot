@@ -3,6 +3,6 @@ export default {
 	aliases: ['test', 't'],
 	descriptor: 'A test command',
 	async execute(message) {
-		return message.reply('Successful 200');
+		return message.reply(Math.trunc(Date.now() / 60000));
 	},
 };
